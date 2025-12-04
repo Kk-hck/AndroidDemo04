@@ -63,7 +63,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
     /**
      * The database version
      */
-    private static final int DATABASE_VERSION = 2;
 
     /**
      * A projection map used to select columns from the database
@@ -191,13 +190,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         */
        @Override
        public void onCreate(SQLiteDatabase db) {
-           db.execSQL("CREATE TABLE " + NotePad.Notes.TABLE_NAME + " ("
-                   + NotePad.Notes._ID + " INTEGER PRIMARY KEY,"
-                   + NotePad.Notes.COLUMN_NAME_TITLE + " TEXT,"
-                   + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT,"
-                   + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER,"
-                   + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER"
-                   + ");");
        }
 
        /**
@@ -207,20 +199,13 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         * by destroying the existing data.
         * A real application should upgrade the database in place.
         */
-       @Override
-       public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-           // Logs that the database is being upgraded
-           Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
-                   + newVersion + ", which will destroy all old data");
-
-           // Kills the table and existing data
-           db.execSQL("DROP TABLE IF EXISTS notes");
-
-           // Recreates the database with a new version
-           onCreate(db);
-       }
-   }
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                // Kills the table and existing data
+                // Recreates the database with a new version
+                onCreate(db);
+            }
+        }
 
    /**
     *
@@ -509,7 +494,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         // If the incoming values map is not null, uses it for the new values.
         if (initialValues != null) {
             values = new ContentValues(initialValues);
-
         } else {
             // Otherwise, create a new value map
             values = new ContentValues();
@@ -558,7 +542,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             Uri noteUri = ContentUris.withAppendedId(NotePad.Notes.CONTENT_ID_URI_BASE, rowId);
 
             // Notifies observers registered against this provider that the data changed.
-            getContext().getContentResolver().notifyChange(noteUri, null);
             return noteUri;
         }
 
