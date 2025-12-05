@@ -5,4 +5,10 @@
     <color name="noteItemBackground">#FFFFFF</color>
     <color name="noteItemTitle">#1A1A1A</color>
     <color name="noteItemDate">#666666</color>
+
+    <!-- 分类颜色 -->
+    <color name="category_default">#E3F2FD</color>
+    <color name="category_work">#F1F8E9</color>
+    <color name="category_personal">#F3E5F5</color>
+    <color name="category_todo">#FFF3E0</color>
 </resources>

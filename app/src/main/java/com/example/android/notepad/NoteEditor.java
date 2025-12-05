@@ -38,7 +38,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -83,6 +85,7 @@ public class NoteEditor extends Activity {
     private Cursor mCursor;
     private EditText mText;
     private String mOriginalContent;
+    private Spinner mCategorySpinner;
 
     /**
      * Defines a custom EditText View that draws lines between each line of text that is displayed.
@@ -241,6 +244,24 @@ public class NoteEditor extends Activity {
         if (savedInstanceState != null) {
             mOriginalContent = savedInstanceState.getString(ORIGINAL_CONTENT);
         }
+
+        // 添加分类选择器
+        mCategorySpinner = findViewById(R.id.category_spinner);
+        setupCategorySpinner();
+    }
+
+    private void setupCategorySpinner() {
+        String[] categories = {
+                NotePad.Notes.CATEGORY_DEFAULT,
+                NotePad.Notes.CATEGORY_WORK,
+                NotePad.Notes.CATEGORY_PERSONAL,
+                NotePad.Notes.CATEGORY_TODO
+        };
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, categories);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCategorySpinner.setAdapter(adapter);
     }
 
     /**
@@ -586,6 +607,11 @@ public class NoteEditor extends Activity {
             values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,updateTime);
         }
 
+        // 保存分类信息
+        String category = mCategorySpinner.getSelectedItem().toString();
+        values.put(NotePad.Notes.COLUMN_NAME_CATEGORY, category);
+
+
 
         /*
          * Updates the provider with the new values in the map. The ListView is updated
@@ -598,12 +624,16 @@ public class NoteEditor extends Activity {
          * local database, the block will be momentary, but in a real app you should use
          * android.content.AsyncQueryHandler or android.os.AsyncTask.
          */
+
         getContentResolver().update(
                 mUri,    // The URI for the record to update.
                 values,  // The map of column names and new values to apply to them.
                 null,    // No selection criteria are used, so no where columns are necessary.
                 null     // No where columns are used, so no where arguments are necessary.
             );
+
+        // 通知小部件更新
+        AppWidget.notifyWidgetUpdate(this);
 
 
     }
