@@ -40,4 +40,7 @@
     <string name="error_title">Error</string>
     <string name="error_message">Error loading note</string>
     <string name="nothing_to_save">There is nothing to save</string>
+
+    <string name="app_widget_description">便签应用小组件</string>
+
 </resources>

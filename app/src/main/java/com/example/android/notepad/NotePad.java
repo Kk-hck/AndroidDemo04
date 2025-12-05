@@ -28,6 +28,7 @@ import android.provider.BaseColumns;
 public final class NotePad {
     public static final String AUTHORITY = "com.google.provider.NotePad";
 
+
     // This class cannot be instantiated
     private NotePad() {
     }
@@ -156,5 +157,19 @@ public final class NotePad {
          * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
          */
         public static final String COLUMN_NAME_MODIFICATION_DATE = "modified";
+
+        /**
+         * Column name for the note category
+         * <P>Type: TEXT</P>
+         */
+        public static final String COLUMN_NAME_CATEGORY = "category";
+
+        // 预定义的分类
+        public static final String CATEGORY_DEFAULT = "默认";
+        public static final String CATEGORY_WORK = "工作";
+        public static final String CATEGORY_PERSONAL = "个人";
+        public static final String CATEGORY_TODO = "待办";
+
+
     }
 }

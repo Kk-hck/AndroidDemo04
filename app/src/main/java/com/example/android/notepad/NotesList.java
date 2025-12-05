@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -36,7 +37,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
@@ -64,7 +67,12 @@ public class NotesList extends ListActivity {
     private static final String[] PROJECTION = new String[] {
             NotePad.Notes._ID, // 0
             NotePad.Notes.COLUMN_NAME_TITLE, // 1
+            NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, // 2
+            NotePad.Notes.COLUMN_NAME_CATEGORY // 3
     };
+
+    /** The index of the category column */
+    private static final int COLUMN_INDEX_CATEGORY = 3;
 
     /** The index of the title column */
     private static final int COLUMN_INDEX_TITLE = 1;
@@ -148,6 +156,7 @@ public class NotesList extends ListActivity {
 
 
 
+
         /*
          * The following two arrays create a "map" between columns in the cursor and view IDs
          * for items in the ListView. Each element in the dataColumns array represents
@@ -157,9 +166,11 @@ public class NotesList extends ListActivity {
          */
 
         // The names of the cursor columns to display in the view, initialized to the title column
+        String[] dataColumns = { NotePad.Notes.COLUMN_NAME_TITLE ,NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,NotePad.Notes.COLUMN_NAME_CATEGORY} ;
 
         // The view IDs that will display the cursor columns, initialized to the TextView in
         // noteslist_item.xml
+        int[] viewIDs = { android.R.id.text1 , android.R.id.text2, R.id.text_category};
 
         // Creates the backing adapter for the ListView.
         mAdapter = new SimpleCursorAdapter(
@@ -180,21 +191,83 @@ public class NotesList extends ListActivity {
         loadNotes(mCurrentFilter);
     }
 
+    // 在 NotesList.java 中替换原有的 mAdapter 初始化代码
     private void initAdapter() {
         String[] dataColumns = {
                 NotePad.Notes.COLUMN_NAME_TITLE,
+                NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,
+                NotePad.Notes.COLUMN_NAME_CATEGORY
         };
+
+        int[] viewIDs = { android.R.id.text1, android.R.id.text2, R.id.text_category };
 
 
         mAdapter = new SimpleCursorAdapter(
                 this,
                 R.layout.noteslist_item,
+                null,
                 dataColumns,
                 viewIDs,
                 0
+        ) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+
+                // 获取 LinearLayout（根布局）
+                LinearLayout rootLayout = (LinearLayout) view;
+
+                Cursor cursor = (Cursor) getItem(position);
+                if (cursor != null) {
+                    int categoryIndex = cursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_CATEGORY);
+                    System.out.println("分类索引: " + categoryIndex);
+                    if (categoryIndex != -1) {
+                        String category = cursor.getString(categoryIndex);
+                        System.out.println("获取到的分类值: " + category);
+
+                        // 根据分类设置背景色
+                        int backgroundColor = getBackgroundColorByCategory(category);
+                        rootLayout.setBackgroundColor(backgroundColor);
+
+                        // 可选：同时更新分类文本
+                        TextView categoryView = view.findViewById(R.id.text_category);
+                        categoryView.setText(category);
+                    }
+                }
+
+
+                return view;
+            }
+
+        };
 
         setListAdapter(mAdapter);
     }
+
+    // 添加根据分类设置背景色的方法
+   private int getBackgroundColorByCategory(String category) {
+       if (category == null) {
+           return Color.WHITE;  // 默认背景色
+       }
+
+       System.out.println("======================");
+       System.out.println("当前分类: " + category);
+
+       // 应该匹配数据库中实际存储的分类值
+       switch (category) {
+           case NotePad.Notes.CATEGORY_DEFAULT:  // 匹配实际的分类值
+               return getResources().getColor(R.color.category_work);
+           case NotePad.Notes.CATEGORY_WORK:
+               return getResources().getColor(R.color.category_personal);
+           case NotePad.Notes.CATEGORY_PERSONAL:
+               return getResources().getColor(R.color.category_todo);
+           case NotePad.Notes.CATEGORY_TODO:
+               return getResources().getColor(R.color.category_default);
+           default:
+               return Color.WHITE;  // 默认白色
+       }
+   }
+
 
     private void loadNotes(String filter) {
         String selection = null;
@@ -216,12 +289,35 @@ public class NotesList extends ListActivity {
                 NotePad.Notes.DEFAULT_SORT_ORDER
         );
 
+
+        // 移动到第一行
+//        if (cursor.moveToFirst()) {
+//            do {
+//                // 获取列数
+//                int columnCount = cursor.getColumnCount();
+//
+//                // 遍历每一列
+//                for (int i = 0; i < columnCount; i++) {
+//                    String columnName = cursor.getColumnName(i);
+//                    String columnValue = cursor.getString(i);
+//                    System.out.println(columnName + ": " + columnValue);
+//                }
+//                System.out.println("--------------------"); // 行分隔符
+//            } while (cursor.moveToNext()); // 移动到下一行
+//        } else {
+//            System.out.println("No data found");
+//        }
+
+
         // 更新适配器数据
         mAdapter.changeCursor(cursor);
+        mAdapter.notifyDataSetChanged();
 
         // 更新空视图显示
         updateEmptyView();
     }
+
+
 
     private void updateEmptyView() {
         TextView emptyView = findViewById(android.R.id.empty);

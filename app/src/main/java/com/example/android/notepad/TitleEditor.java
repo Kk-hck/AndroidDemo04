@@ -158,6 +158,8 @@ public class TitleEditor extends Activity {
                 null     // No "where" columns are used, so no "where" values are needed.
             );
 
+            AppWidget.notifyWidgetUpdate(this);
+
         }
     }
 

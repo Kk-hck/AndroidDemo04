@@ -63,6 +63,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
     /**
      * The database version
      */
+    private static final int DATABASE_VERSION = 5;
 
     /**
      * A projection map used to select columns from the database
@@ -81,6 +82,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             NotePad.Notes._ID,               // Projection position 0, the note's id
             NotePad.Notes.COLUMN_NAME_NOTE,  // Projection position 1, the note's content
             NotePad.Notes.COLUMN_NAME_TITLE, // Projection position 2, the note's title
+            NotePad.Notes.COLUMN_NAME_CATEGORY
     };
     private static final int READ_NOTE_NOTE_INDEX = 1;
     private static final int READ_NOTE_TITLE_INDEX = 2;
@@ -105,6 +107,15 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
 
     // Handle to a new DatabaseHelper.
     private DatabaseHelper mOpenHelper;
+
+    private static final String DATABASE_CREATE = "CREATE TABLE " + NotePad.Notes.TABLE_NAME + " ("
+            + NotePad.Notes._ID + " INTEGER PRIMARY KEY,"
+            + NotePad.Notes.COLUMN_NAME_TITLE + " TEXT,"
+            + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT,"
+            + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER,"
+            + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER,"
+            + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT"  // 需要添加这一行
+            + ");";
 
 
     /**
@@ -168,6 +179,10 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         // Maps "NAME" to "title AS NAME"
         sLiveFolderProjectionMap.put(LiveFolders.NAME, NotePad.Notes.COLUMN_NAME_TITLE + " AS " +
             LiveFolders.NAME);
+
+        // Maps "category" to "category"
+        sNotesProjectionMap.put(NotePad.Notes.COLUMN_NAME_CATEGORY, NotePad.Notes.COLUMN_NAME_CATEGORY);
+
     }
 
     /**
@@ -190,6 +205,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         */
        @Override
        public void onCreate(SQLiteDatabase db) {
+           db.execSQL(DATABASE_CREATE);
        }
 
        /**
@@ -199,13 +215,20 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         * by destroying the existing data.
         * A real application should upgrade the database in place.
         */
+
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            if (oldVersion < 3) {
+                db.execSQL("ALTER TABLE " + NotePad.Notes.TABLE_NAME +
+                        " ADD COLUMN " + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT");
+            } else {
                 // Kills the table and existing data
+                db.execSQL("DROP TABLE IF EXISTS " + NotePad.Notes.TABLE_NAME);
                 // Recreates the database with a new version
                 onCreate(db);
             }
         }
+   }
 
    /**
     *
@@ -300,6 +323,26 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
            null,          // don't filter by row groups
            orderBy        // The sort order
        );
+
+//       // 移动到第一行
+//       if (c.moveToFirst()) {
+//           do {
+//               // 获取列数
+//               int columnCount = c.getColumnCount();
+//
+//               // 遍历每一列
+//               for (int i = 0; i < columnCount; i++) {
+//                   String columnName = c.getColumnName(i);
+//                   String columnValue = c.getString(i);
+//                   System.out.println(columnName + ": " + columnValue);
+//               }
+//               System.out.println("--------------------"); // 行分隔符
+//           } while (c.moveToNext()); // 移动到下一行
+//       } else {
+//           System.out.println("No data found");
+//       }
+
+
 
        // Tells the Cursor what URI to watch, so it knows when its source data changes
        c.setNotificationUri(getContext().getContentResolver(), uri);
@@ -536,12 +579,21 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                                              // into the columns.
         );
 
+
+
+
         // If the insert succeeded, the row ID exists.
         if (rowId > 0) {
             // Creates a URI with the note ID pattern and the new row ID appended to it.
             Uri noteUri = ContentUris.withAppendedId(NotePad.Notes.CONTENT_ID_URI_BASE, rowId);
 
             // Notifies observers registered against this provider that the data changed.
+            // 通知内容观察者数据已更改
+            getContext().getContentResolver().notifyChange(uri, null);
+
+            // 添加小部件更新通知
+            AppWidget.notifyWidgetUpdate(getContext());
+
             return noteUri;
         }
 
@@ -622,7 +674,12 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
          * that the incoming URI changed. The object passes this along to the resolver framework,
          * and observers that have registered themselves for the provider are notified.
          */
+        // 通知内容观察者数据已更改
         getContext().getContentResolver().notifyChange(uri, null);
+
+        // 添加小部件更新通知
+        AppWidget.notifyWidgetUpdate(getContext());
+
 
         // Returns the number of rows deleted.
         return count;
@@ -705,6 +762,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                     whereArgs                 // The where clause column values to select on, or
                                               // null if the values are in the where argument.
                 );
+
                 break;
             // If the incoming pattern is invalid, throws an exception.
             default:
@@ -715,7 +773,13 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
          * that the incoming URI changed. The object passes this along to the resolver framework,
          * and observers that have registered themselves for the provider are notified.
          */
+
+        // 通知内容观察者数据已更改
         getContext().getContentResolver().notifyChange(uri, null);
+
+        // 添加小部件更新通知
+        AppWidget.notifyWidgetUpdate(getContext());
+
 
         // Returns the number of rows updated.
         return count;
