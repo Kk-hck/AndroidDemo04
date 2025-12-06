@@ -39,10 +39,12 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 
@@ -81,241 +83,243 @@ public class NotesList extends ListActivity {
     private SearchView mSearchView;
     private String mCurrentFilter = "";
 
+    private Spinner mCategoryFilterSpinner;
+
     /**
      * onCreate is called when Android starts this Activity from scratch.
      */
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.notes_list);
+    setContentView(R.layout.notes_list);
 
-        initAdapter();
+    mCategoryFilterSpinner = findViewById(R.id.category_filter_spinner);
+    setupCategoryFilterSpinner();
 
-        mSearchView = findViewById(R.id.search_view);
-        mSearchView.setQueryHint("搜索笔记标题或内容...");
+    mSearchView = findViewById(R.id.search_view);
+    mSearchView.setQueryHint("搜索笔记标题或内容...");
 
-        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                                               @Override
-                                               public boolean onQueryTextSubmit(String query) {
-                                                   // 搜索提交时执行
-                                                   performSearch(query);
-                                                   System.out.println("搜索提交：" + query);
-                                                   return true;
-                                               }
-
-                                               @Override
-                                               public boolean onQueryTextChange(String newText) {
-                                                   // 文本变化时实时搜索（可以添加延迟避免频繁查询）
-                                                   performSearch(newText);
-                                                   System.out.println("文本变化：" + newText);
-                                                   return true;
-                                               }
-        });
-
-        // 设置ActionBar样式
-        if (getActionBar() != null) {
-            getActionBar().setDisplayShowHomeEnabled(true);
+    mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            performSearch(query);
+            System.out.println("搜索提交：" + query);
+            return true;
         }
 
-        // The user does not need to hold down the key to use menu shortcuts.
-        setDefaultKeyMode(DEFAULT_KEYS_SHORTCUT);
-
-        /* If no data is given in the Intent that started this Activity, then this Activity
-         * was started when the intent filter matched a MAIN action. We should use the default
-         * provider URI.
-         */
-        // Gets the intent that started this Activity.
-        Intent intent = getIntent();
-
-        // If there is no data associated with the Intent, sets the data to the default URI, which
-        // accesses a list of notes.
-        if (intent.getData() == null) {
-            intent.setData(NotePad.Notes.CONTENT_URI);
+        @Override
+        public boolean onQueryTextChange(String newText) {
+            performSearch(newText);
+            System.out.println("文本变化：" + newText);
+            return true;
         }
+    });
 
-        /*
-         * Sets the callback for context menu activation for the ListView. The listener is set
-         * to be this Activity. The effect is that context menus are enabled for items in the
-         * ListView, and the context menu is handled by a method in NotesList.
-         */
-        getListView().setOnCreateContextMenuListener(this);
-
-        /* Performs a managed query. The Activity handles closing and requerying the cursor
-         * when needed.
-         *
-         * Please see the introductory note about performing provider operations on the UI thread.
-         */
-        Cursor cursor = managedQuery(
-            getIntent().getData(),            // Use the default content URI for the provider.
-            PROJECTION,                       // Return the note ID and title for each note.
-            null,                             // No where clause, return all records.
-            null,                             // No where clause, therefore no where column values.
-            NotePad.Notes.DEFAULT_SORT_ORDER  // Use the default sort order.
-        );
-
-
-
-
-        /*
-         * The following two arrays create a "map" between columns in the cursor and view IDs
-         * for items in the ListView. Each element in the dataColumns array represents
-         * a column name; each element in the viewID array represents the ID of a View.
-         * The SimpleCursorAdapter maps them in ascending order to determine where each column
-         * value will appear in the ListView.
-         */
-
-        // The names of the cursor columns to display in the view, initialized to the title column
-        String[] dataColumns = { NotePad.Notes.COLUMN_NAME_TITLE ,NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,NotePad.Notes.COLUMN_NAME_CATEGORY} ;
-
-        // The view IDs that will display the cursor columns, initialized to the TextView in
-        // noteslist_item.xml
-        int[] viewIDs = { android.R.id.text1 , android.R.id.text2, R.id.text_category};
-
-        // Creates the backing adapter for the ListView.
-        mAdapter = new SimpleCursorAdapter(
-                      this,                             // The Context for the ListView
-                      R.layout.noteslist_item,          // Points to the XML for a list item
-                      cursor,                           // The cursor to get items from
-                      dataColumns,
-                      viewIDs
-              );
-
-        // Sets the ListView's adapter to be the cursor adapter that was just created.
-        setListAdapter(mAdapter);
-
+    // 设置ActionBar样式
+    if (getActionBar() != null) {
+        getActionBar().setDisplayShowHomeEnabled(true);
     }
 
-    private void performSearch(String query) {
-        mCurrentFilter = query != null ? query : "";
-        loadNotes(mCurrentFilter);
+    // The user does not need to hold down the key to use menu shortcuts.
+    setDefaultKeyMode(DEFAULT_KEYS_SHORTCUT);
+
+    /* If no data is given in the Intent that started this Activity, then this Activity
+     * was started when the intent filter matched a MAIN action. We should use the default
+     * provider URI.
+     */
+    // Gets the intent that started this Activity.
+    Intent intent = getIntent();
+
+    // If there is no data associated with the Intent, sets the data to the default URI, which
+    // accesses a list of notes.
+    if (intent.getData() == null) {
+        intent.setData(NotePad.Notes.CONTENT_URI);
     }
 
-    // 在 NotesList.java 中替换原有的 mAdapter 初始化代码
-    private void initAdapter() {
-        String[] dataColumns = {
-                NotePad.Notes.COLUMN_NAME_TITLE,
-                NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,
-                NotePad.Notes.COLUMN_NAME_CATEGORY
+    /*
+     * Sets the callback for context menu activation for the ListView. The listener is set
+     * to be this Activity. The effect is that context menus are enabled for items in the
+     * ListView, and the context menu is handled by a method in NotesList.
+     */
+    getListView().setOnCreateContextMenuListener(this);
+
+    // 初始化适配器
+    initAdapter();
+
+    // 初始加载所有笔记
+    loadNotes("", "全部");
+}
+
+
+    private void setupCategoryFilterSpinner() {
+        // 添加"全部"选项作为默认选项
+        String[] categories = {
+                "全部",
+                NotePad.Notes.CATEGORY_DEFAULT,
+                NotePad.Notes.CATEGORY_WORK,
+                NotePad.Notes.CATEGORY_PERSONAL,
+                NotePad.Notes.CATEGORY_TODO
         };
 
-        int[] viewIDs = { android.R.id.text1, android.R.id.text2, R.id.text_category };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, categories);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCategoryFilterSpinner.setAdapter(adapter);
 
-
-        mAdapter = new SimpleCursorAdapter(
-                this,
-                R.layout.noteslist_item,
-                null,
-                dataColumns,
-                viewIDs,
-                0
-        ) {
+        // 设置监听器
+        mCategoryFilterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedCategory = (String) parent.getItemAtPosition(position);
+                loadNotesWithCategory(selectedCategory);
+            }
 
-                // 获取 LinearLayout（根布局）
-                LinearLayout rootLayout = (LinearLayout) view;
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                loadNotesWithCategory(null);
+            }
+        });
+    }
 
-                Cursor cursor = (Cursor) getItem(position);
-                if (cursor != null) {
-                    int categoryIndex = cursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_CATEGORY);
-                    System.out.println("分类索引: " + categoryIndex);
-                    if (categoryIndex != -1) {
-                        String category = cursor.getString(categoryIndex);
-                        System.out.println("获取到的分类值: " + category);
 
-                        // 根据分类设置背景色
-                        int backgroundColor = getBackgroundColorByCategory(category);
-                        rootLayout.setBackgroundColor(backgroundColor);
+private void initAdapter() {
+    String[] dataColumns = {
+            NotePad.Notes.COLUMN_NAME_TITLE,
+            NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,
+            NotePad.Notes.COLUMN_NAME_CATEGORY
+    };
 
-                        // 可选：同时更新分类文本
-                        TextView categoryView = view.findViewById(R.id.text_category);
+    int[] viewIDs = { android.R.id.text1, android.R.id.text2, R.id.text_category };
+
+    // 创建一个空的适配器
+    mAdapter = new SimpleCursorAdapter(
+            this,
+            R.layout.noteslist_item,
+            null,  // 初始时游标为null
+            dataColumns,
+            viewIDs,
+            0
+    ) {
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = super.getView(position, convertView, parent);
+
+            // 获取 LinearLayout（根布局）
+            LinearLayout rootLayout = (LinearLayout) view;
+
+            Cursor cursor = (Cursor) getItem(position);
+            if (cursor != null) {
+                int categoryIndex = cursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_CATEGORY);
+                if (categoryIndex != -1) {
+                    String category = cursor.getString(categoryIndex);
+
+                    // 根据分类设置背景色
+                    int backgroundColor = getBackgroundColorByCategory(category);
+                    rootLayout.setBackgroundColor(backgroundColor);
+
+                    // 更新分类文本
+                    TextView categoryView = view.findViewById(R.id.text_category);
+                    if (categoryView != null) {
                         categoryView.setText(category);
                     }
                 }
-
-
-                return view;
             }
 
-        };
+            return view;
+        }
+    };
 
-        setListAdapter(mAdapter);
-    }
+    setListAdapter(mAdapter);
+}
+
+
 
     // 添加根据分类设置背景色的方法
-   private int getBackgroundColorByCategory(String category) {
-       if (category == null) {
-           return Color.WHITE;  // 默认背景色
-       }
-
-       System.out.println("======================");
-       System.out.println("当前分类: " + category);
-
-       // 应该匹配数据库中实际存储的分类值
-       switch (category) {
-           case NotePad.Notes.CATEGORY_DEFAULT:  // 匹配实际的分类值
-               return getResources().getColor(R.color.category_work);
-           case NotePad.Notes.CATEGORY_WORK:
-               return getResources().getColor(R.color.category_personal);
-           case NotePad.Notes.CATEGORY_PERSONAL:
-               return getResources().getColor(R.color.category_todo);
-           case NotePad.Notes.CATEGORY_TODO:
-               return getResources().getColor(R.color.category_default);
-           default:
-               return Color.WHITE;  // 默认白色
-       }
-   }
-
-
-    private void loadNotes(String filter) {
-        String selection = null;
-        String[] selectionArgs = null;
-
-        if (filter != null && !filter.trim().isEmpty()) {
-            // 构建搜索条件：标题或内容包含搜索词
-            selection = NotePad.Notes.COLUMN_NAME_TITLE + " LIKE ? OR " +
-                    NotePad.Notes.COLUMN_NAME_NOTE + " LIKE ?";
-            String likePattern = "%" + filter + "%";
-            selectionArgs = new String[]{likePattern, likePattern};
+    private int getBackgroundColorByCategory(String category) {
+        if (category == null) {
+            return getResources().getColor(R.color.noteItemBackground);
         }
 
-        Cursor cursor = managedQuery(
-                getIntent().getData(),
-                PROJECTION,
-                selection,
-                selectionArgs,
-                NotePad.Notes.DEFAULT_SORT_ORDER
-        );
-
-
-        // 移动到第一行
-//        if (cursor.moveToFirst()) {
-//            do {
-//                // 获取列数
-//                int columnCount = cursor.getColumnCount();
-//
-//                // 遍历每一列
-//                for (int i = 0; i < columnCount; i++) {
-//                    String columnName = cursor.getColumnName(i);
-//                    String columnValue = cursor.getString(i);
-//                    System.out.println(columnName + ": " + columnValue);
-//                }
-//                System.out.println("--------------------"); // 行分隔符
-//            } while (cursor.moveToNext()); // 移动到下一行
-//        } else {
-//            System.out.println("No data found");
-//        }
-
-
-        // 更新适配器数据
-        mAdapter.changeCursor(cursor);
-        mAdapter.notifyDataSetChanged();
-
-        // 更新空视图显示
-        updateEmptyView();
+        switch (category) {
+            case NotePad.Notes.CATEGORY_DEFAULT:
+                return getResources().getColor(R.color.category_default);
+            case NotePad.Notes.CATEGORY_WORK:
+                return getResources().getColor(R.color.category_work);
+            case NotePad.Notes.CATEGORY_PERSONAL:
+                return getResources().getColor(R.color.category_personal);
+            case NotePad.Notes.CATEGORY_TODO:
+                return getResources().getColor(R.color.category_todo);
+            default:
+                return getResources().getColor(R.color.noteItemBackground);
+        }
     }
+
+
+private void loadNotes(String filter, String category) {
+    // 更新当前过滤条件
+    mCurrentFilter = filter != null ? filter : "";
+
+    String selection = null;
+    String[] selectionArgs = null;
+
+    // 处理搜索过滤
+    if (!mCurrentFilter.trim().isEmpty()) {
+        selection = NotePad.Notes.COLUMN_NAME_TITLE + " LIKE ? OR " +
+                NotePad.Notes.COLUMN_NAME_NOTE + " LIKE ?";
+        String likePattern = "%" + mCurrentFilter + "%";
+        selectionArgs = new String[]{likePattern, likePattern};
+    }
+
+    // 处理分类过滤
+    if (category != null && !category.equals("全部")) {
+        String categorySelection = NotePad.Notes.COLUMN_NAME_CATEGORY + " = ?";
+        String[] categorySelectionArgs = {category};
+
+        if (selection != null) {
+            // 如果已有搜索条件，则合并条件
+            selection = "(" + selection + ") AND " + categorySelection;
+            String[] newSelectionArgs = new String[selectionArgs.length + 1];
+            System.arraycopy(selectionArgs, 0, newSelectionArgs, 0, selectionArgs.length);
+            newSelectionArgs[selectionArgs.length] = categorySelectionArgs[0];
+            selectionArgs = newSelectionArgs;
+        } else {
+            // 只有分类条件
+            selection = categorySelection;
+            selectionArgs = categorySelectionArgs;
+        }
+    }
+
+    // 使用 ContentResolver 查询替代 managedQuery
+    Cursor cursor = getContentResolver().query(
+            getIntent().getData(),
+            PROJECTION,
+            selection,
+            selectionArgs,
+            NotePad.Notes.DEFAULT_SORT_ORDER
+    );
+
+    // 使用 changeCursor 自动管理旧游标
+    mAdapter.changeCursor(cursor);
+
+    // 更新空视图显示
+    updateEmptyView();
+}
+
+
+
+// 新增方法，专门处理带分类的加载
+    private void loadNotesWithCategory(String category) {
+        loadNotes(mCurrentFilter, category);
+    }
+
+
+    private void performSearch(String query) {
+        mCurrentFilter = query != null ? query : "";
+        String selectedCategory = (String) mCategoryFilterSpinner.getSelectedItem();
+        loadNotes(mCurrentFilter, selectedCategory);
+    }
+
 
 
 
@@ -541,6 +545,21 @@ public class NotesList extends ListActivity {
         menu.addIntentOptions(Menu.CATEGORY_ALTERNATIVE, 0, 0,
                 new ComponentName(this, NotesList.class), null, intent, 0, null);
     }
+
+   @Override
+    protected void onResume() {
+    super.onResume();
+    // 确保spinner已经初始化
+    if (mCategoryFilterSpinner != null) {
+        String selectedCategory = (String) mCategoryFilterSpinner.getSelectedItem();
+        if (selectedCategory != null) {
+            loadNotes(mCurrentFilter, selectedCategory);
+        } else {
+            loadNotes(mCurrentFilter, "全部");
+        }
+    }
+}
+
 
     /**
      * This method is called when the user selects an item from the context menu

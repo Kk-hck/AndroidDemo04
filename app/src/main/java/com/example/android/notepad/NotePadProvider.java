@@ -114,7 +114,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT,"
             + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER,"
             + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER,"
-            + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT"  // 需要添加这一行
+            + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT"
             + ");";
 
 
@@ -323,26 +323,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
            null,          // don't filter by row groups
            orderBy        // The sort order
        );
-
-//       // 移动到第一行
-//       if (c.moveToFirst()) {
-//           do {
-//               // 获取列数
-//               int columnCount = c.getColumnCount();
-//
-//               // 遍历每一列
-//               for (int i = 0; i < columnCount; i++) {
-//                   String columnName = c.getColumnName(i);
-//                   String columnValue = c.getString(i);
-//                   System.out.println(columnName + ": " + columnValue);
-//               }
-//               System.out.println("--------------------"); // 行分隔符
-//           } while (c.moveToNext()); // 移动到下一行
-//       } else {
-//           System.out.println("No data found");
-//       }
-
-
 
        // Tells the Cursor what URI to watch, so it knows when its source data changes
        c.setNotificationUri(getContext().getContentResolver(), uri);

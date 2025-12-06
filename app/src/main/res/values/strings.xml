@@ -43,4 +43,13 @@
 
     <string name="app_widget_description">便签应用小组件</string>
 
+    <string name="select_category">选择分类</string>
+
+    <string name="category_default">默认</string>
+    <string name="category_work">工作</string>
+    <string name="category_personal">个人</string>
+    <string name="category_todo">待办事项</string>
+
+
+
 </resources>

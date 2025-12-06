@@ -4,9 +4,9 @@
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-  
+
           http://www.apache.org/licenses/LICENSE-2.0
-  
+
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#F5F5F5">
 
     <view
         class="com.example.android.notepad.NoteEditor$LinedEditText"
@@ -24,19 +26,23 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:padding="5dp"
+        android:background="@drawable/note_background"
+        android:padding="16dp"
         android:scrollbars="vertical"
         android:fadingEdge="vertical"
         android:gravity="top"
-        android:textSize="22sp"
-        android:capitalize="sentences" />
+        android:textSize="18sp"
+        android:lineSpacingExtra="4dp"
+        android:capitalize="sentences"
+        android:hint="请输入笔记内容..." />
 
     <Spinner
         android:id="@+id/category_spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="16dp"
+        android:padding="12dp"
+        android:background="@drawable/spinner_background_roubded" />
 
 </LinearLayout>
 
