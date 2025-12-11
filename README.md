@@ -390,11 +390,11 @@
 
 ###### a、编辑笔记
 
-![6d255d4222764acb88b07e7d62eef99a](/D:\Android\NotePad-main/ima/6d255d42-2276-4acb-88b0-7e7d62eef99a.png)
+![6d255d4222764acb88b07e7d62eef99a](./ima/6d255d42-2276-4acb-88b0-7e7d62eef99a.png)
 
 ###### b、搜索笔记
 
-![3587bf7f5553457da8bbf4856ad21e69](/D:\Android\NotePad-main/ima/3587bf7f-5553-457d-a8bb-f4856ad21e69.png)
+![3587bf7f5553457da8bbf4856ad21e69](./ima/3587bf7f-5553-457d-a8bb-f4856ad21e69.png)
 
 ![59f5a2f1-5a7c-43e4-95fe-1036829f105d](./ima/59f5a2f1-5a7c-43e4-95fe-1036829f105d.png)
 
